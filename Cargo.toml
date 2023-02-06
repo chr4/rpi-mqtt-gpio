@@ -1,0 +1,16 @@
+[package]
+name = "rpi-mqtt-gpio"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rppal = "0.14"
+rumqttc = "0.20"
+
+# Cross compiling to armv7 via Docker and Cross
+#
+# colima start --mount $HOME:w
+# cargo install cross --git https://github.com/cross-rs/cross
+# cross build --target armv7-unknown-linux-musleabihf
