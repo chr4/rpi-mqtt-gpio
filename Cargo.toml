@@ -17,3 +17,6 @@ serde_yaml = "0.9"
 # colima start --mount $HOME:w
 # cargo install cross --git https://github.com/cross-rs/cross
 # cross build --target armv7-unknown-linux-musleabihf
+
+[profile.release]
+strip = true
