@@ -1,0 +1,68 @@
+name: build
+
+on:
+  push:
+    tags:
+      - 'v*' # Build tagged releases
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux-armv7:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: armv7-unknown-linux-musleabihf
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --target armv7-unknown-linux-musleabihf --release
+      - name: Compress
+        run: bzip2 -f target/armv7-unknown-linux-musleabihf/release/rpi-mqtt-gpio
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-linux-armv7
+          path: target/armv7-unknown-linux-musleabihf/release/rpi-mqtt-gpio.bz2
+
+  release:
+    needs: [build-linux-armv7]
+    name: Upload Release Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all releases
+        uses: actions/download-artifact@v2
+        with:
+          path: ./
+
+      - name: Get version
+        id: get_version
+        run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/v}
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Linux armv7 release
+        id: upload-linux-armv7-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./release-linux-armv7/rpi-mqtt-gpio.bz2
+          asset_name: rpi-mqtt-gpio-${{ steps.get_version.outputs.VERSION }}-linux-armv7.bz2
+          asset_content_type: application/x-bzip2
