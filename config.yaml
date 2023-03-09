@@ -1,0 +1,25 @@
+mqtt:
+  name: rpi-mqtt-gpio
+  host: 192.168.1.1
+  port: 1883
+  qos: 1
+  keep_alive: 5
+  clean_session: false
+  retain: false
+  cap: 10
+
+digital_outputs:
+  # Output to disable the heatpump
+  - name: i1
+    gpio: 5
+    mqtt_topic: "heatpump/output/i1"
+    mqtt_topic_set: "heatpump/output/i1/set"
+    mqtt_state_on: "ON"
+    mqtt_state_off: "OFF"
+
+
+  # Output to enable PV mode (full steam)
+  - name: i3
+    gpio: 22
+    mqtt_topic: "heatpump/output/i3"
+    mqtt_topic_set: "heatpump/output/i3/set"
