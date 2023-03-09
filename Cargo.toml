@@ -6,8 +6,11 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rppal = "0.14"
+gpio-cdev = "0.4"
 rumqttc = "0.20"
+bytes = "1.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
 
 # Cross compiling to armv7 via Docker and Cross
 #
