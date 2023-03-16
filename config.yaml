@@ -14,8 +14,8 @@ digital_outputs:
     gpio: 5
     mqtt_topic: "heatpump/output/i1"
     mqtt_topic_set: "heatpump/output/i1/set"
-    mqtt_state_on: "ON"
-    mqtt_state_off: "OFF"
+    mqtt_state_high: "ON"
+    mqtt_state_low: "OFF"
 
 
   # Output to enable PV mode (full steam)
