@@ -68,20 +68,20 @@ pub struct DigitalOutput {
     pub gpio: u32,
     pub mqtt_topic: String,
     pub mqtt_topic_set: String,
-    #[serde(default = "DigitalOutput::default_mqtt_state_on")]
-    pub mqtt_state_on: String,
-    #[serde(default = "DigitalOutput::default_mqtt_state_off")]
-    pub mqtt_state_off: String,
+    #[serde(default = "DigitalOutput::default_mqtt_state_high")]
+    pub mqtt_state_high: String,
+    #[serde(default = "DigitalOutput::default_mqtt_state_low")]
+    pub mqtt_state_low: String,
 }
 
 impl DigitalOutput {
     fn default_name() -> String {
         "gpio".to_string()
     }
-    fn default_mqtt_state_on() -> String {
+    fn default_mqtt_state_high() -> String {
         "ON".to_string()
     }
-    fn default_mqtt_state_off() -> String {
+    fn default_mqtt_state_low() -> String {
         "OFF".to_string()
     }
 }
