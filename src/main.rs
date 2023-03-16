@@ -12,6 +12,8 @@ mod config;
 struct Mqtt<'a> {
     name: &'a str,
     host: &'a str,
+    user: Option<String>,
+    password: Option<String>,
     port: u16,
     qos: QoS,
     cap: usize,
@@ -42,6 +44,8 @@ impl<'a> Mqtt<'a> {
             name,
             host,
             port,
+            user: None,
+            password: None,
             qos: QoS::AtLeastOnce,
             keep_alive: Duration::from_secs(5),
             cap: 10,
@@ -54,7 +58,11 @@ impl<'a> Mqtt<'a> {
     fn connect(&mut self) -> Result<(), ClientError> {
         let mut mqtt_options = MqttOptions::new(self.name, self.host, self.port);
         mqtt_options.set_keep_alive(self.keep_alive);
-        mqtt_options.set_clean_session(self.clean_session);
+        mqtt_options.set_clean_session(self.clean_session); 
+
+        if self.user.is_some() && self.password.is_some() {
+            mqtt_options.set_credentials(self.user.clone().unwrap(), self.password.clone().unwrap());
+        }
 
         let (mut client, connection) = Client::new(mqtt_options, self.cap);
 
@@ -172,6 +180,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let conf: config::Config = serde_yaml::from_reader(reader)?;
 
     let mut mqtt = Mqtt::new(&conf.mqtt.name, &conf.mqtt.host, conf.mqtt.port);
+    mqtt.user = conf.mqtt.user;
+    mqtt.password = conf.mqtt.password;
     mqtt.qos = match conf.mqtt.qos {
         0 => QoS::AtMostOnce,
         1 => QoS::AtLeastOnce,

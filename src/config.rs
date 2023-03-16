@@ -22,6 +22,10 @@ pub struct MqttConfig {
     pub host: String,
     #[serde(default = "MqttConfig::default_port")]
     pub port: u16,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
     #[serde(default = "MqttConfig::default_qos")]
     pub qos: u8,
     #[serde(default = "MqttConfig::default_keep_alive")]
