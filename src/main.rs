@@ -61,7 +61,7 @@ impl<'a> Mqtt<'a> {
         mqtt_options.set_clean_session(self.clean_session);
 
         if self.user.is_some() && self.password.is_some() {
-            mqtt_options.set_credentials(self.user.clone().unwrap(), self.password.clone().unwrap());
+            mqtt_options.set_credentials(self.user.unwrap(), self.password.unwrap());
         }
 
         let (mut client, connection) = Client::new(mqtt_options, self.cap);
