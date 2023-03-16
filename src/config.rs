@@ -72,6 +72,8 @@ pub struct DigitalOutput {
     pub mqtt_state_high: String,
     #[serde(default = "DigitalOutput::default_mqtt_state_low")]
     pub mqtt_state_low: String,
+    #[serde(default = "DigitalOutput::default_initial_state")]
+    pub initial_state: String,
 }
 
 impl DigitalOutput {
@@ -82,6 +84,9 @@ impl DigitalOutput {
         "ON".to_string()
     }
     fn default_mqtt_state_low() -> String {
+        "OFF".to_string()
+    }
+    fn default_initial_state() -> String {
         "OFF".to_string()
     }
 }

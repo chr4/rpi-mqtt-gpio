@@ -195,10 +195,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut pins: Vec<Pin> = Vec::with_capacity(2);
 
     for output in conf.digital_outputs.iter() {
+        let initial_state = if output.initial_state == output.mqtt_state_high { 1 } else { 0 };
+
         // NOTE: OUTPUT lines can also handle get_value() requests
         let handle =
             chip.get_line(output.gpio)?
-                .request(LineRequestFlags::OUTPUT, 0, "write-gpio")?;
+                .request(LineRequestFlags::OUTPUT, initial_state, "write-gpio")?;
 
         let mut i = Pin::new(handle);
         i.mqtt_topic = &output.mqtt_topic;
