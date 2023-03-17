@@ -22,6 +22,10 @@ pub struct MqttConfig {
     pub host: String,
     #[serde(default = "MqttConfig::default_port")]
     pub port: u16,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub user: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub password: Option<String>,
     #[serde(default = "MqttConfig::default_qos")]
     pub qos: u8,
     #[serde(default = "MqttConfig::default_keep_alive")]
@@ -68,20 +72,25 @@ pub struct DigitalOutput {
     pub gpio: u32,
     pub mqtt_topic: String,
     pub mqtt_topic_set: String,
-    #[serde(default = "DigitalOutput::default_mqtt_state_on")]
-    pub mqtt_state_on: String,
-    #[serde(default = "DigitalOutput::default_mqtt_state_off")]
-    pub mqtt_state_off: String,
+    #[serde(default = "DigitalOutput::default_mqtt_state_high")]
+    pub mqtt_state_high: String,
+    #[serde(default = "DigitalOutput::default_mqtt_state_low")]
+    pub mqtt_state_low: String,
+    #[serde(default = "DigitalOutput::default_initial_state")]
+    pub initial_state: String,
 }
 
 impl DigitalOutput {
     fn default_name() -> String {
         "gpio".to_string()
     }
-    fn default_mqtt_state_on() -> String {
+    fn default_mqtt_state_high() -> String {
         "ON".to_string()
     }
-    fn default_mqtt_state_off() -> String {
+    fn default_mqtt_state_low() -> String {
+        "OFF".to_string()
+    }
+    fn default_initial_state() -> String {
         "OFF".to_string()
     }
 }

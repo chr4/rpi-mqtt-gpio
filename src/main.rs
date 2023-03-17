@@ -12,6 +12,8 @@ mod config;
 struct Mqtt<'a> {
     name: &'a str,
     host: &'a str,
+    user: Option<&'a str>,
+    password: Option<&'a str>,
     port: u16,
     qos: QoS,
     cap: usize,
@@ -42,6 +44,8 @@ impl<'a> Mqtt<'a> {
             name,
             host,
             port,
+            user: None,
+            password: None,
             qos: QoS::AtLeastOnce,
             keep_alive: Duration::from_secs(5),
             cap: 10,
@@ -55,6 +59,10 @@ impl<'a> Mqtt<'a> {
         let mut mqtt_options = MqttOptions::new(self.name, self.host, self.port);
         mqtt_options.set_keep_alive(self.keep_alive);
         mqtt_options.set_clean_session(self.clean_session);
+
+        if let (Some(u), Some(p)) = (self.user, self.password) {
+            mqtt_options.set_credentials(u, p);
+        }
 
         let (mut client, connection) = Client::new(mqtt_options, self.cap);
 
@@ -106,8 +114,8 @@ struct Pin<'a> {
     // TODO: Infer topics from name and prefix like mqtt-io?
     mqtt_topic: &'a str,
     mqtt_topic_set: &'a str,
-    mqtt_state_on: &'a str,
-    mqtt_state_off: &'a str,
+    mqtt_state_high: &'a str,
+    mqtt_state_low: &'a str,
     qos: QoS,
     retain: bool,
 }
@@ -118,8 +126,8 @@ impl<'a> Pin<'a> {
             line_handle,
             mqtt_topic: "gpio",
             mqtt_topic_set: "gpio/set",
-            mqtt_state_on: "ON",
-            mqtt_state_off: "OFF",
+            mqtt_state_high: "ON",
+            mqtt_state_low: "OFF",
             qos: QoS::AtLeastOnce,
             retain: false,
         }
@@ -129,8 +137,8 @@ impl<'a> Pin<'a> {
         let value = self.line_handle.get_value();
 
         let state = match value {
-            Ok(1) => self.mqtt_state_on,
-            Ok(0) => self.mqtt_state_off,
+            Ok(1) => self.mqtt_state_high,
+            Ok(0) => self.mqtt_state_low,
             _ => panic!("GPIO pin returned neither 0 nor 1, this should never happen!"),
         };
 
@@ -145,12 +153,12 @@ impl<'a> Pin<'a> {
         mqtt_client: &mut Client,
         payload: Bytes,
     ) -> Result<(), gpio_cdev::Error> {
-        if payload == self.mqtt_state_on {
-            println!("Setting {} = {}", self.mqtt_topic, self.mqtt_state_on);
+        if payload == self.mqtt_state_high {
+            println!("Setting {} = {}", self.mqtt_topic, self.mqtt_state_high);
             self.line_handle.set_value(1)?;
             self.publish_state(mqtt_client)?;
-        } else if payload == self.mqtt_state_off {
-            println!("Setting {} = {}", self.mqtt_topic, self.mqtt_state_off);
+        } else if payload == self.mqtt_state_low {
+            println!("Setting {} = {}", self.mqtt_topic, self.mqtt_state_low);
             self.line_handle.set_value(0)?;
             self.publish_state(mqtt_client)?;
         }
@@ -172,6 +180,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let conf: config::Config = serde_yaml::from_reader(reader)?;
 
     let mut mqtt = Mqtt::new(&conf.mqtt.name, &conf.mqtt.host, conf.mqtt.port);
+    mqtt.user = conf.mqtt.user.as_deref();
+    mqtt.password = conf.mqtt.password.as_deref();
     mqtt.qos = match conf.mqtt.qos {
         0 => QoS::AtMostOnce,
         1 => QoS::AtLeastOnce,
@@ -195,14 +205,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut pins: Vec<Pin> = Vec::with_capacity(2);
 
     for output in conf.digital_outputs.iter() {
+        let initial_state = if output.initial_state == output.mqtt_state_high { 1 } else { 0 };
+
         // NOTE: OUTPUT lines can also handle get_value() requests
         let handle =
             chip.get_line(output.gpio)?
-                .request(LineRequestFlags::OUTPUT, 0, "write-gpio")?;
+                .request(LineRequestFlags::OUTPUT, initial_state, "write-gpio")?;
 
         let mut i = Pin::new(handle);
         i.mqtt_topic = &output.mqtt_topic;
         i.mqtt_topic_set = &output.mqtt_topic_set;
+        i.mqtt_state_high = &output.mqtt_state_high;
+        i.mqtt_state_low = &output.mqtt_state_low;
         i.retain = conf.mqtt.retain;
         println!(
             "Registered GPIO pin {} (via {:?})",
