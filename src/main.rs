@@ -71,7 +71,7 @@ impl<'a> Mqtt<'a> {
             mqtt_options.set_credentials(self.user.unwrap(), self.password.unwrap());
         }
 
-        mqtt_options.set_last_will(LastWill::new(self.availability_topic, self.payload_not_available, self.qos, false));
+        mqtt_options.set_last_will(LastWill::new(self.availability_topic, self.payload_not_available, self.qos, true));
 
         let (mut client, connection) = Client::new(mqtt_options, self.cap);
 
@@ -84,7 +84,7 @@ impl<'a> Mqtt<'a> {
 
         println!("Setting {} = {}", self.availability_topic, self.payload_available);
         client
-            .publish(self.availability_topic, self.qos, false, self.payload_available)
+            .publish(self.availability_topic, self.qos, true, self.payload_available)
             .unwrap_or_else(|e| println!("Error publishing: {e}"));
 
         self.mqtt_client.client = Some(client);
