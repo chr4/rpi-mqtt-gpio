@@ -6,6 +6,7 @@ use std::time::Duration;
 use bytes::Bytes;
 use gpio_cdev::{Chip, LineHandle, LineRequestFlags};
 use rumqttc::{Client, ClientError, Connection, Event, MqttOptions, Packet, QoS, SubscribeFilter};
+use rumqttc::mqttbytes::v4::LastWill;
 
 mod config;
 
@@ -19,6 +20,9 @@ struct Mqtt<'a> {
     cap: usize,
     keep_alive: Duration,
     clean_session: bool,
+    availability_topic: &'a str,
+    payload_available: &'a str,
+    payload_not_available: &'a str,
     subscribe: Vec<&'a str>,
     mqtt_client: MqttClient,
 }
@@ -50,6 +54,9 @@ impl<'a> Mqtt<'a> {
             keep_alive: Duration::from_secs(5),
             cap: 10,
             clean_session: false,
+            availability_topic: "gpio/availability",
+            payload_available: "online",
+            payload_not_available: "offline",
             subscribe: vec!["#"],
             mqtt_client: MqttClient::new(),
         }
@@ -64,6 +71,8 @@ impl<'a> Mqtt<'a> {
             mqtt_options.set_credentials(self.user.unwrap(), self.password.unwrap());
         }
 
+        mqtt_options.set_last_will(LastWill::new(self.availability_topic, self.payload_not_available, self.qos, false));
+
         let (mut client, connection) = Client::new(mqtt_options, self.cap);
 
         println!("Subscribing to topics: {:?}", self.subscribe);
@@ -72,6 +81,12 @@ impl<'a> Mqtt<'a> {
                 .iter()
                 .map(|topic| SubscribeFilter::new(topic.to_string(), self.qos)),
         )?;
+
+        println!("Setting {} = {}", self.availability_topic, self.payload_available);
+        client
+            .publish(self.availability_topic, self.qos, false, self.payload_available)
+            .unwrap_or_else(|e| println!("Error publishing: {e}"));
+
         self.mqtt_client.client = Some(client);
         self.mqtt_client.connection = Some(connection);
         Ok(())
@@ -194,6 +209,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     mqtt.keep_alive = Duration::from_secs(conf.mqtt.keep_alive);
     mqtt.cap = conf.mqtt.cap;
     mqtt.clean_session = conf.mqtt.clean_session;
+    mqtt.availability_topic = conf.mqtt.availability_topic.as_str();
+    mqtt.payload_available = conf.mqtt.payload_available.as_str();
+    mqtt.payload_not_available = conf.mqtt.payload_not_available.as_str();
     mqtt.subscribe = conf
         .digital_outputs
         .iter()

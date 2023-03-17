@@ -36,6 +36,12 @@ pub struct MqttConfig {
     pub retain: bool,
     #[serde(default = "MqttConfig::default_cap")]
     pub cap: usize,
+    #[serde(default = "MqttConfig::default_availability_topic")]
+    pub availability_topic: String,
+    #[serde(default = "MqttConfig::default_payload_available")]
+    pub payload_available: String,
+    #[serde(default = "MqttConfig::default_payload_not_available")]
+    pub payload_not_available: String,
 }
 
 impl MqttConfig {
@@ -62,6 +68,15 @@ impl MqttConfig {
     }
     fn default_cap() -> usize {
         10
+    }
+    fn default_availability_topic() -> String {
+        "rpi-mqtt-gpio/status".to_string()
+    }
+    fn default_payload_available() -> String {
+        "online".to_string()
+    }
+    fn default_payload_not_available() -> String {
+        "offline".to_string()
     }
 }
 
