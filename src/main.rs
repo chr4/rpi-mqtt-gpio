@@ -5,7 +5,9 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use gpio_cdev::{Chip, LineHandle, LineRequestFlags};
-use rumqttc::{Client, ClientError, Connection, Event, LastWill, MqttOptions, Packet, QoS, SubscribeFilter};
+use rumqttc::{
+    Client, ClientError, Connection, Event, LastWill, MqttOptions, Packet, QoS, SubscribeFilter,
+};
 
 mod config;
 
@@ -70,7 +72,12 @@ impl<'a> Mqtt<'a> {
             mqtt_options.set_credentials(u, p);
         }
 
-        mqtt_options.set_last_will(LastWill::new(self.availability_topic, self.payload_not_available, self.qos, true));
+        mqtt_options.set_last_will(LastWill::new(
+            self.availability_topic,
+            self.payload_not_available,
+            self.qos,
+            true,
+        ));
 
         let (mut client, connection) = Client::new(mqtt_options, self.cap);
 
@@ -81,9 +88,17 @@ impl<'a> Mqtt<'a> {
                 .map(|topic| SubscribeFilter::new(topic.to_string(), self.qos)),
         )?;
 
-        println!("Setting {} = {}", self.availability_topic, self.payload_available);
+        println!(
+            "Setting {} = {}",
+            self.availability_topic, self.payload_available
+        );
         client
-            .publish(self.availability_topic, self.qos, true, self.payload_available)
+            .publish(
+                self.availability_topic,
+                self.qos,
+                true,
+                self.payload_available,
+            )
             .unwrap_or_else(|e| println!("Error publishing: {e}"));
 
         self.mqtt_client.client = Some(client);
@@ -222,12 +237,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut pins: Vec<Pin> = Vec::with_capacity(2);
 
     for output in conf.digital_outputs.iter() {
-        let initial_state = if output.initial_state == output.mqtt_state_high { 1 } else { 0 };
+        let initial_state = if output.initial_state == output.mqtt_state_high {
+            1
+        } else {
+            0
+        };
 
         // NOTE: OUTPUT lines can also handle get_value() requests
-        let handle =
-            chip.get_line(output.gpio)?
-                .request(LineRequestFlags::OUTPUT, initial_state, "write-gpio")?;
+        let handle = chip.get_line(output.gpio)?.request(
+            LineRequestFlags::OUTPUT,
+            initial_state,
+            "write-gpio",
+        )?;
 
         let mut i = Pin::new(handle);
         i.mqtt_topic = &output.mqtt_topic;
