@@ -53,7 +53,7 @@ impl<'a> Mqtt<'a> {
             keep_alive: Duration::from_secs(5),
             cap: 10,
             clean_session: false,
-            availability_topic: "gpio/availability",
+            availability_topic: "rpi-mqtt-gpio/status",
             payload_available: "online",
             payload_not_available: "offline",
             subscribe: vec!["#"],
