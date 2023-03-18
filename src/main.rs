@@ -5,8 +5,7 @@ use std::time::Duration;
 
 use bytes::Bytes;
 use gpio_cdev::{Chip, LineHandle, LineRequestFlags};
-use rumqttc::{Client, ClientError, Connection, Event, MqttOptions, Packet, QoS, SubscribeFilter};
-use rumqttc::mqttbytes::v4::LastWill;
+use rumqttc::{Client, ClientError, Connection, Event, LastWill, MqttOptions, Packet, QoS, SubscribeFilter};
 
 mod config;
 
