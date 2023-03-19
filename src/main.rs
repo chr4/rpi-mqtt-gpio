@@ -6,8 +6,8 @@ use std::time::Duration;
 use bytes::Bytes;
 use gpio_cdev::{Chip, LineHandle, LineRequestFlags};
 use rumqttc::{
-    Client, ClientError, ConnAck, Connection, Event, LastWill, MqttOptions, Packet, QoS,
-    SubscribeFilter,
+    Client, ClientError, ConnAck, ConnectReturnCode, Connection, Event, LastWill, MqttOptions,
+    Packet, QoS, SubscribeFilter,
 };
 
 mod config;
@@ -122,7 +122,7 @@ impl<'a> Mqtt<'a> {
                 }
                 Ok(Event::Incoming(Packet::ConnAck(ConnAck {
                     session_present: true,
-                    code: rumqttc::ConnectReturnCode::Success,
+                    code: ConnectReturnCode::Success,
                 }))) => {
                     // Send available message on connect/reconnect
                     println!(
