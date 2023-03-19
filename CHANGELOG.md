@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.1.2
+
+- Add support for `availability_topic` to broadcast availability status via mqtt last will.
+
 
 ## v0.1.1
 

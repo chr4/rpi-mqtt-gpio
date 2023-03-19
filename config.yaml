@@ -18,6 +18,14 @@ digital_outputs:
     mqtt_state_low: "OFF"
     initial_state: "OFF"
 
+    # An availability topic is useful to notify consumers on whether the switch is available or not
+    # based on whether the daemon is running. In particular, home assistant uses this to show an
+    # unavailable state in case the daemon is not running.
+    # See: https://www.home-assistant.io/integrations/switch.mqtt/#availability
+    availability_topic: "rpi-mqtt-gpio/status"
+    payload_available: "online"
+    payload_not_available: "offline"
+
 
   # Output to enable PV mode (full steam)
   - name: i3
