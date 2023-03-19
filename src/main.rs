@@ -10,6 +10,8 @@ use rumqttc::{
     Packet, QoS, SubscribeFilter,
 };
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 mod config;
 
 struct Mqtt<'a> {
@@ -209,6 +211,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config_file = match env::args().nth(1) {
         Some(f) => f,
         None => {
+            eprintln!("rpi-mqtt-gpio {}", VERSION);
             eprintln!("Usage: rpi-mqtt-gpio <config.yaml>");
             std::process::exit(1);
         }
