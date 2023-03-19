@@ -6,7 +6,8 @@ use std::time::Duration;
 use bytes::Bytes;
 use gpio_cdev::{Chip, LineHandle, LineRequestFlags};
 use rumqttc::{
-    Client, ClientError, Connection, Event, LastWill, MqttOptions, Packet, QoS, SubscribeFilter,
+    Client, ClientError, ConnAck, Connection, Event, LastWill, MqttOptions, Packet, QoS,
+    SubscribeFilter,
 };
 
 mod config;
@@ -88,19 +89,6 @@ impl<'a> Mqtt<'a> {
                 .map(|topic| SubscribeFilter::new(topic.to_string(), self.qos)),
         )?;
 
-        println!(
-            "Setting {} = {}",
-            self.availability_topic, self.payload_available
-        );
-        client
-            .publish(
-                self.availability_topic,
-                self.qos,
-                true,
-                self.payload_available,
-            )
-            .unwrap_or_else(|e| println!("Error publishing: {e}"));
-
         self.mqtt_client.client = Some(client);
         self.mqtt_client.connection = Some(connection);
         Ok(())
@@ -116,21 +104,42 @@ impl<'a> Mqtt<'a> {
             .iter()
             .enumerate()
         {
-            let Ok(Event::Incoming(Packet::Publish(n))) = notification else { continue };
-
             let client = self
                 .mqtt_client
                 .client
                 .as_mut()
                 .expect("MqttClient::client not set");
 
-            // Check whether incoming topic matches, if so set pin
-            for p in pins.iter() {
-                if n.topic == p.mqtt_topic_set {
-                    p.set_and_publish_state(client, n.payload.to_owned())?;
-                    continue;
+            match notification {
+                Ok(Event::Incoming(Packet::Publish(n))) => {
+                    // Check whether incoming topic matches, if so set pin
+                    for p in pins.iter() {
+                        if n.topic == p.mqtt_topic_set {
+                            p.set_and_publish_state(client, n.payload.to_owned())?;
+                            continue;
+                        }
+                    }
                 }
-            }
+                Ok(Event::Incoming(Packet::ConnAck(ConnAck {
+                    session_present: true,
+                    code: rumqttc::ConnectReturnCode::Success,
+                }))) => {
+                    // Send available message on connect/reconnect
+                    println!(
+                        "Setting {} = {}",
+                        self.availability_topic, self.payload_available
+                    );
+                    client
+                        .publish(
+                            self.availability_topic,
+                            self.qos,
+                            true,
+                            self.payload_available,
+                        )
+                        .unwrap_or_else(|e| println!("Error publishing: {e}"));
+                }
+                _ => (),
+            };
         }
 
         Ok(())
