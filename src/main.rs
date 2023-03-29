@@ -116,7 +116,6 @@ impl<'a> Mqtt<'a> {
                     for p in pins.iter() {
                         if n.topic == p.mqtt_topic_set {
                             p.set_and_publish_state(client, n.payload.to_owned())?;
-                            continue;
                         }
                     }
                 }
