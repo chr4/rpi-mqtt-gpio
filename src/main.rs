@@ -138,6 +138,7 @@ impl<'a> Mqtt<'a> {
                         )
                         .unwrap_or_else(|e| println!("Error publishing: {e}"));
                 }
+                // Ignore all other incoming messages
                 _ => (),
             };
         }
